@@ -1,0 +1,19 @@
+# Triggers the MiniMax H3 control plane's reaper every 5 minutes.
+# Vercel Hobby only runs crons daily; the reaper is the safety net that
+# kills wedged GPU pods and enforces the session hard cap, so it needs
+# real cadence. The secret is a repo secret; nothing sensitive lives here.
+name: reap
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+jobs:
+  reap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: call reaper
+        run: |
+          curl -sf --max-time 30 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "User-Agent: h3-reaper-cron/1.0" \
+            https://minimax-h3-opal.vercel.app/api/cron/reap
